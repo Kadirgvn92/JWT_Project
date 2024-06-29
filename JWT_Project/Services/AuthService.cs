@@ -5,7 +5,14 @@ namespace JWT_Project.Services;
 
 public class AuthService : IAuthService
 {
-    public Task<UserLoginResponse> LoginUserAsync(UserLoginRequest request)
+    readonly ITokenService tokenService;
+
+    public AuthService(ITokenService tokenService)
+    {
+        this.tokenService = tokenService;
+    }
+
+    public async Task<UserLoginResponse> LoginUserAsync(UserLoginRequest request)
     {
         UserLoginResponse response = new();
 
@@ -16,11 +23,13 @@ public class AuthService : IAuthService
 
         if (request.Username == "onur" && request.Password == "123456")
         {
-            response.AccessTokenExpireDate = DateTime.UtcNow;
+            var generatedTokenInformation = await tokenService.GenerateToken(new GenerateTokenRequest { Username = request.Username });
+
             response.AuthenticateResult = true;
-            response.AuthToken = string.Empty;
+            response.AuthToken = generatedTokenInformation.Token;
+            response.AccessTokenExpireDate = generatedTokenInformation.TokenExpireDate;
         }
 
-        return Task.FromResult(response);
+        return response;
     }
 }
